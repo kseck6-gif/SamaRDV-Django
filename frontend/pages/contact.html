@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact — SamaRDV</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo" style="text-decoration:none">
+      <span class="logo-icon">✚</span>
+      <span class="logo-text">SamaRDV</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="../index.html">Accueil</a></li>
+      <li><a href="hopitaux.html">Hôpitaux</a></li>
+      <li><a href="rendez-vous.html">Mes RDV</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+    <a href="connexion.html" class="btn-nav">Se connecter</a>
+    <button class="burger" onclick="document.body.classList.toggle('nav-open')">☰</button>
+  </nav>
+
+  <section class="page-header">
+    <h1>Contactez-nous</h1>
+    <p>Notre équipe est disponible pour vous aider du lundi au vendredi</p>
+  </section>
+
+  <section style="padding:4rem 5%;display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:1100px;margin:0 auto;">
+
+    <!-- INFOS -->
+    <div>
+      <h2 style="font-family:var(--font-display);font-size:1.8rem;color:var(--dark);margin-bottom:1.5rem">Nous sommes là pour vous</h2>
+      <p style="color:var(--muted);line-height:1.8;margin-bottom:2rem">Vous avez une question sur un rendez-vous, un problème technique ou souhaitez devenir hôpital partenaire ? N'hésitez pas à nous écrire.</p>
+
+      <div style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div style="display:flex;align-items:center;gap:1rem;padding:1.2rem;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+          <span style="font-size:1.8rem">📞</span>
+          <div>
+            <strong style="display:block;color:var(--dark)">Téléphone</strong>
+            <span style="color:var(--muted);font-size:.9rem">+221 33 000 00 00</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;padding:1.2rem;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+          <span style="font-size:1.8rem">✉️</span>
+          <div>
+            <strong style="display:block;color:var(--dark)">Email</strong>
+            <span style="color:var(--muted);font-size:.9rem">contact@samaRDV.sn</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;padding:1.2rem;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+          <span style="font-size:1.8rem">📍</span>
+          <div>
+            <strong style="display:block;color:var(--dark)">Adresse</strong>
+            <span style="color:var(--muted);font-size:.9rem">Avenue Cheikh Anta Diop, Dakar, Sénégal</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;padding:1.2rem;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+          <span style="font-size:1.8rem">🕒</span>
+          <div>
+            <strong style="display:block;color:var(--dark)">Horaires</strong>
+            <span style="color:var(--muted);font-size:.9rem">Lun – Ven : 08h00 – 18h00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div style="background:white;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;box-shadow:var(--shadow)">
+      <h3 style="font-family:var(--font-display);font-size:1.4rem;color:var(--dark);margin-bottom:1.5rem">Envoyez-nous un message</h3>
+
+      <div class="form-group">
+        <label>Nom complet</label>
+        <input type="text" id="ct-nom" placeholder="Votre nom"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="ct-email" placeholder="votre@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>Objet</label>
+        <select id="ct-sujet">
+          <option>Question sur un rendez-vous</option>
+          <option>Problème technique</option>
+          <option>Devenir hôpital partenaire</option>
+          <option>Signaler un problème</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="ct-message" rows="5" placeholder="Écrivez votre message ici..."></textarea>
+      </div>
+      <p class="form-erreur" id="ct-erreur" style="display:none"></p>
+      <button class="btn-primary" id="ct-btn" onclick="envoyerMessage()">📨 Envoyer le message</button>
+    </div>
+
+  </section>
+
+  <footer class="footer" style="margin-top:2rem">
+    <div class="footer-bottom">
+      <p>© 2025 SamaRDV. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="../js/api.js"></script>
+  <script>
+    async function envoyerMessage() {
+      const nom = document.getElementById('ct-nom').value.trim();
+      const email = document.getElementById('ct-email').value.trim();
+      const sujet = document.getElementById('ct-sujet').value;
+      const message = document.getElementById('ct-message').value.trim();
+      const err = document.getElementById('ct-erreur');
+      const btn = document.getElementById('ct-btn');
+      const afficher = (m) => { err.textContent = m; err.style.display = m ? 'block' : 'none'; };
+
+      afficher('');
+      if (!nom || !email || !message) return afficher('Veuillez remplir tous les champs.');
+
+      btn.textContent = '⏳ Envoi en cours...';
+      btn.disabled = true;
+      try {
+        await api('POST', '/contact', { nom, email, sujet, message });
+        btn.textContent = '✅ Message envoyé !';
+        btn.style.background = '#16a34a';
+        ['ct-nom', 'ct-email', 'ct-message'].forEach((id) => { document.getElementById(id).value = ''; });
+        setTimeout(() => { btn.textContent = '📨 Envoyer le message'; btn.style.background = ''; btn.disabled = false; }, 3000);
+      } catch (e) {
+        afficher(e.message);
+        btn.textContent = '📨 Envoyer le message';
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

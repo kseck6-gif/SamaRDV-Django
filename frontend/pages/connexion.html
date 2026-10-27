@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connexion — SamaRDV</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <div class="auth-container">
+    <div class="auth-card">
+
+      <div class="auth-logo">
+        <div style="display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.5rem">
+          <span class="logo-icon">✚</span>
+          <span class="logo-text">SamaRDV</span>
+        </div>
+        <p style="color:var(--muted);font-size:.9rem">Votre santé, notre priorité</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-connexion" onclick="showForm('connexion')">Se connecter</button>
+        <button class="auth-tab" id="tab-inscription" onclick="showForm('inscription')">S'inscrire</button>
+      </div>
+
+      <!-- CONNEXION -->
+      <form id="form-connexion" class="auth-form" onsubmit="seConnecter(event)" novalidate>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="votre@email.com" id="c-email" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" placeholder="••••••••" id="c-mdp" autocomplete="current-password"/>
+        </div>
+        <div style="text-align:right;margin-top:-0.5rem;">
+          <a href="#" style="font-size:.85rem;color:var(--primary);text-decoration:none;">Mot de passe oublié ?</a>
+        </div>
+        <p class="form-erreur" id="c-erreur" style="display:none"></p>
+        <button class="btn-primary" id="c-btn" type="submit">Se connecter</button>
+        <div class="auth-divider">ou</div>
+        <button type="button" onclick="continuerSansCompte()" style="background:var(--card-bg);border:1.5px solid var(--border);border-radius:12px;padding:.9rem;font-family:var(--font-body);font-size:.95rem;cursor:pointer;width:100%;color:var(--text);font-weight:500;transition:border-color .2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+          🏥 Continuer sans compte
+        </button>
+      </form>
+
+      <!-- INSCRIPTION -->
+      <form id="form-inscription" class="auth-form" style="display:none" onsubmit="sInscrire(event)" novalidate>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" placeholder="Aminata" id="i-prenom"/>
+          </div>
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" placeholder="Diallo" id="i-nom"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="votre@email.com" id="i-email" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="tel" placeholder="+221 7X XXX XX XX" id="i-tel"/>
+        </div>
+        <div class="form-group">
+          <label>Date de naissance</label>
+          <input type="date" id="i-ddn"/>
+        </div>
+        <div class="form-group">
+          <label>Mot de passe</label>
+          <input type="password" placeholder="Au moins 8 caractères" id="i-mdp" autocomplete="new-password"/>
+        </div>
+        <p class="form-erreur" id="i-erreur" style="display:none"></p>
+        <button class="btn-primary" id="i-btn" type="submit">Créer mon compte</button>
+        <p style="text-align:center;font-size:.8rem;color:var(--muted)">
+          En vous inscrivant, vous acceptez nos <a href="#" style="color:var(--primary)">conditions d'utilisation</a>
+        </p>
+      </form>
+
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    function showForm(tab) {
+      document.getElementById('form-connexion').style.display = tab === 'connexion' ? 'flex' : 'none';
+      document.getElementById('form-inscription').style.display = tab === 'inscription' ? 'flex' : 'none';
+      document.getElementById('tab-connexion').classList.toggle('active', tab === 'connexion');
+      document.getElementById('tab-inscription').classList.toggle('active', tab === 'inscription');
+    }
+
+    function erreur(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg || '';
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    // Redirection après connexion : uniquement vers une page du site (pas de lien externe)
+    function destination() {
+      const retour = new URLSearchParams(window.location.search).get('retour');
+      return retour && /^[a-z-]+\.html$/.test(retour) ? retour : '../index.html';
+    }
+
+    async function envoyer(btnId, texteBtn, erreurId, chemin, corps) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = true;
+      btn.textContent = 'Veuillez patienter…';
+      erreur(erreurId, '');
+      try {
+        const r = await api('POST', chemin, corps);
+        setSession(r.token, r.utilisateur);
+        window.location.href = destination();
+      } catch (e) {
+        erreur(erreurId, e.message);
+        btn.disabled = false;
+        btn.textContent = texteBtn;
+      }
+    }
+
+    function seConnecter(e) {
+      e.preventDefault();
+      const email = document.getElementById('c-email').value.trim();
+      const motDePasse = document.getElementById('c-mdp').value;
+      if (!email || !motDePasse) return erreur('c-erreur', 'Veuillez remplir tous les champs.');
+      envoyer('c-btn', 'Se connecter', 'c-erreur', '/auth/connexion', { email, motDePasse });
+    }
+
+    function sInscrire(e) {
+      e.preventDefault();
+      const prenom = document.getElementById('i-prenom').value.trim();
+      const nom = document.getElementById('i-nom').value.trim();
+      const email = document.getElementById('i-email').value.trim();
+      const telephone = document.getElementById('i-tel').value.trim();
+      const dateNaissance = document.getElementById('i-ddn').value;
+      const motDePasse = document.getElementById('i-mdp').value;
+      if (!prenom || !nom || !email || !motDePasse) return erreur('i-erreur', 'Veuillez remplir les champs obligatoires.');
+      envoyer('i-btn', 'Créer mon compte', 'i-erreur', '/auth/inscription', { prenom, nom, email, telephone, dateNaissance, motDePasse });
+    }
+
+    function continuerSansCompte() {
+      window.location.href = 'hopitaux.html';
+    }
+  </script>
+</body>
+</html>

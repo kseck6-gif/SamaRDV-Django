@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mes Rendez-vous — SamaRDV</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo" style="text-decoration:none">
+      <span class="logo-icon">✚</span>
+      <span class="logo-text">SamaRDV</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="../index.html">Accueil</a></li>
+      <li><a href="hopitaux.html">Hôpitaux</a></li>
+      <li><a href="rendez-vous.html" class="active">Mes RDV</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <a href="connexion.html" class="btn-nav">Se connecter</a>
+    <button class="burger" onclick="document.body.classList.toggle('nav-open')">☰</button>
+  </nav>
+
+  <section class="page-header">
+    <h1>Mes Rendez-vous</h1>
+    <p>Gérez et consultez tous vos rendez-vous médicaux</p>
+  </section>
+
+  <!-- TABS -->
+  <section style="padding: 1.5rem 5%; background: var(--card-bg); border-bottom: 1px solid var(--border);">
+    <div style="display:flex; gap:1rem; max-width:700px;">
+      <button class="auth-tab active" id="tab-avenir" onclick="showTab('avenir')">📅 À venir</button>
+      <button class="auth-tab" id="tab-passe" onclick="showTab('passe')">📋 Passés</button>
+      <button class="auth-tab" id="tab-tous" onclick="showTab('tous')">📂 Tous</button>
+    </div>
+  </section>
+
+  <section class="rdv-list">
+    <div id="rdv-container"></div>
+  </section>
+
+  <footer class="footer" style="margin-top:4rem">
+    <div class="footer-bottom">
+      <p>© 2025 SamaRDV. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let currentTab = 'avenir';
+    let tousLesRdv = [];
+
+    function showTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.auth-tab').forEach((t) => t.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      renderRDV();
+    }
+
+    // Rendez-vous du compte (si connecté) + ceux pris sans compte sur cet appareil, sans doublons
+    async function chargerRDV() {
+      const container = document.getElementById('rdv-container');
+      container.innerHTML = '<p class="slots-info">Chargement…</p>';
+      try {
+        const liste = [];
+        if (getUser()) liste.push(...await api('GET', '/rdv'));
+        const refs = getRefsInvite();
+        if (refs.length) liste.push(...await api('POST', '/rdv/suivi', { references: refs }));
+        const vus = new Set();
+        tousLesRdv = liste.filter((r) => !vus.has(r.reference) && vus.add(r.reference));
+        renderRDV();
+      } catch (e) {
+        container.innerHTML = `<p class="form-erreur">${esc(e.message)}</p>`;
+      }
+    }
+
+    function renderRDV() {
+      const container = document.getElementById('rdv-container');
+      const today = aujourdhui();
+      let liste = [...tousLesRdv];
+
+      if (currentTab === 'avenir') liste = liste.filter((r) => r.statut === 'confirme' && r.date >= today);
+      if (currentTab === 'passe') liste = liste.filter((r) => r.date < today);
+      const cle = (r) => r.date + ' ' + r.heure;
+      liste.sort((a, b) => (currentTab === 'passe' ? cle(b).localeCompare(cle(a)) : cle(a).localeCompare(cle(b))));
+
+      if (!liste.length) {
+        const invite = !getUser() && !getRefsInvite().length;
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <h3>Aucun rendez-vous</h3>
+            <p>${invite ? 'Connectez-vous pour retrouver vos rendez-vous, ou prenez-en un nouveau.' : "Vous n'avez pas de rendez-vous dans cette catégorie."}</p>
+            <br/>
+            ${invite ? '<a href="connexion.html?retour=rendez-vous.html" class="btn-outline" style="margin-right:.5rem">Se connecter</a>' : ''}
+            <a href="hopitaux.html" class="btn-outline">Prendre un rendez-vous</a>
+          </div>`;
+        return;
+      }
+
+      const libelle = { confirme: '✅ Confirmé', attente: '⏳ En attente', annule: '❌ Annulé' };
+      container.innerHTML = liste.map((r) => {
+        const d = dateLocale(r.date);
+        const day = d.getDate();
+        const month = d.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase();
+        const fullDate = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const annulable = r.statut === 'confirme' && r.date >= today;
+
+        return `
+          <div class="rdv-card">
+            <div class="rdv-date">
+              <div class="day">${day}</div>
+              <div class="month">${esc(month)}</div>
+            </div>
+            <div class="rdv-info">
+              <h3>${esc(r.medecin)}</h3>
+              <p>🩺 ${esc(r.specialite)} · 🏥 ${esc(r.hopital)}</p>
+              <p>📅 ${esc(fullDate)} à ${esc(r.heure)}</p>
+              <p>👤 ${esc(r.patient)} · 📞 ${esc(r.tel)}</p>
+              <p style="color:var(--muted);font-size:.8rem">Réf. ${esc(r.reference)}</p>
+              ${r.motif ? `<p style="font-style:italic;color:var(--muted);margin-top:.3rem">« ${esc(r.motif)} »</p>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.5rem;align-items:flex-end">
+              <span class="rdv-status ${esc(r.statut)}">${libelle[r.statut] || esc(r.statut)}</span>
+              ${annulable ? `<button onclick="annulerRDV('${esc(r.reference)}')" style="font-size:0.78rem;background:none;border:1px solid #fee2e2;color:#991b1b;padding:.3rem .7rem;border-radius:6px;cursor:pointer;font-family:var(--font-body);">Annuler</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function annulerRDV(reference) {
+      if (!confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')) return;
+      try {
+        await api('PATCH', `/rdv/${encodeURIComponent(reference)}/annuler`);
+        showToast('Rendez-vous annulé.');
+        await chargerRDV();
+      } catch (e) {
+        showToast(e.message, 4500);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', chargerRDV);
+  </script>
+</body>
+</html>

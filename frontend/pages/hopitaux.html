@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hôpitaux — SamaRDV</title>
+  <link rel="stylesheet" href="../css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="../index.html" class="nav-logo" style="text-decoration:none">
+      <span class="logo-icon">✚</span>
+      <span class="logo-text">SamaRDV</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="../index.html">Accueil</a></li>
+      <li><a href="hopitaux.html" class="active">Hôpitaux</a></li>
+      <li><a href="rendez-vous.html">Mes RDV</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <a href="connexion.html" class="btn-nav">Se connecter</a>
+    <button class="burger" onclick="toggleMenu()">☰</button>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <section class="page-header">
+    <h1>Nos Hôpitaux Partenaires</h1>
+    <p>Trouvez le médecin qu'il vous faut parmi nos partenaires de confiance</p>
+  </section>
+
+  <!-- FILTRES -->
+  <section style="padding: 2rem 5%; background: var(--card-bg); border-bottom: 1px solid var(--border);">
+    <div class="search-bar" style="max-width:900px; margin:0 auto;">
+      <div class="search-field">
+        <label>Spécialité</label>
+        <select id="f-spec">
+          <option value="">Toutes les spécialités</option>
+          <option>Cardiologie</option>
+          <option>Pédiatrie</option>
+          <option>Gynécologie</option>
+          <option>Neurologie</option>
+          <option>Ophtalmologie</option>
+          <option>Orthopédie</option>
+          <option>Dermatologie</option>
+          <option>Médecine générale</option>
+        </select>
+      </div>
+      <div class="search-field">
+        <label>Ville</label>
+        <select id="f-ville">
+          <option value="">Toutes les villes</option>
+          <option>Dakar</option>
+          <option>Thiès</option>
+          <option>Saint-Louis</option>
+          <option>Ziguinchor</option>
+        </select>
+      </div>
+      <button class="btn-search" onclick="filtrerHopitaux()">Filtrer</button>
+    </div>
+  </section>
+
+  <p id="filtre-q" class="filtre-actif" style="display:none"></p>
+
+  <!-- MÉDECINS LISTE -->
+  <section class="rdv-list" id="resultats">
+    <div id="medecins-list"></div>
+  </section>
+
+  <!-- MODAL RDV -->
+  <div class="modal-overlay" id="modal-rdv">
+    <div class="modal">
+      <button class="modal-close" onclick="fermerModal()">✕</button>
+      <h2 id="modal-titre">Prendre rendez-vous</h2>
+      <p class="modal-sub" id="modal-sous-titre">Sélectionnez vos informations</p>
+
+      <div class="form-group">
+        <label>Date du rendez-vous</label>
+        <input type="date" id="m-date"/>
+      </div>
+
+      <div class="form-group">
+        <label>Heure disponible</label>
+      </div>
+      <div class="time-slots" id="time-slots"></div>
+      <p class="slots-info" id="slots-info"></p>
+
+      <div class="form-group">
+        <label>Votre nom complet</label>
+        <input type="text" id="m-nom" placeholder="Prénom et nom"/>
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="tel" id="m-tel" placeholder="+221 7X XXX XX XX"/>
+      </div>
+      <div class="form-group">
+        <label>Motif de consultation (optionnel)</label>
+        <textarea id="m-motif" rows="3" placeholder="Décrivez brièvement..."></textarea>
+      </div>
+
+      <p class="form-erreur" id="m-erreur" style="display:none"></p>
+      <button class="btn-primary" id="btn-confirmer" onclick="confirmerRDV()">Confirmer le rendez-vous</button>
+    </div>
+  </div>
+
+  <footer class="footer" style="margin-top:4rem">
+    <div class="footer-bottom">
+      <p>© 2025 SamaRDV. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="../js/api.js"></script>
+  <script>
+    let medecinSelectionne = null;
+    let creneauSelectionne = null;
+    let dateParDefaut = null;
+    let requeteCreneaux = 0; // évite qu'une réponse lente écrase une plus récente
+
+    function renderMedecins(liste) {
+      const container = document.getElementById('medecins-list');
+      if (!liste.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>Aucun médecin trouvé</h3>
+            <p>Modifiez vos critères de recherche.</p>
+          </div>`;
+        return;
+      }
+      container.innerHTML = liste.map((m) => `
+        <div class="medecin-card">
+          <div class="medecin-avatar">👨‍⚕️</div>
+          <div class="medecin-info">
+            <h3>${esc(m.nom)}</h3>
+            <p class="spec">${esc(m.specialite)}</p>
+            <p class="hopital-name">🏥 ${esc(m.hopital)} · ${esc(m.ville)}</p>
+            <p class="rating">★ ${esc(m.rating)} · ${esc(m.experience)} ans d'expérience</p>
+          </div>
+          <button class="btn-rdv" onclick="ouvrirModal(${Number(m.id)})">Prendre RDV</button>
+        </div>
+      `).join('');
+    }
+
+    let medecinsCharges = [];
+
+    async function filtrerHopitaux() {
+      const container = document.getElementById('medecins-list');
+      const params = new URLSearchParams();
+      const spec = document.getElementById('f-spec').value;
+      const ville = document.getElementById('f-ville').value;
+      const q = new URLSearchParams(window.location.search).get('q');
+      if (spec) params.set('spec', spec);
+      if (ville) params.set('ville', ville);
+      if (q) params.set('q', q);
+
+      container.innerHTML = '<p class="slots-info">Chargement…</p>';
+      try {
+        medecinsCharges = await api('GET', '/medecins' + (params.toString() ? '?' + params : ''));
+        renderMedecins(medecinsCharges);
+      } catch (e) {
+        container.innerHTML = `<p class="form-erreur">${esc(e.message)}</p>`;
+      }
+    }
+
+    function afficherErreur(msg) {
+      const el = document.getElementById('m-erreur');
+      el.textContent = msg || '';
+      el.style.display = msg ? 'block' : 'none';
+    }
+
+    async function chargerCreneaux() {
+      const date = document.getElementById('m-date').value;
+      const slots = document.getElementById('time-slots');
+      const info = document.getElementById('slots-info');
+      creneauSelectionne = null;
+      if (!date || !medecinSelectionne) { slots.innerHTML = ''; return; }
+
+      const numero = ++requeteCreneaux;
+      slots.innerHTML = '';
+      info.textContent = 'Chargement des créneaux…';
+      try {
+        const r = await api('GET', `/medecins/${medecinSelectionne.id}/creneaux?date=${encodeURIComponent(date)}`);
+        if (numero !== requeteCreneaux) return;
+        slots.innerHTML = r.creneaux.map((c) => `
+          <div class="slot ${c.disponible ? '' : 'unavailable'}" onclick="selectSlot(this, '${esc(c.heure)}')">${esc(c.heure)}</div>
+        `).join('');
+        info.textContent = r.creneaux.some((c) => c.disponible) ? '' : 'Aucun créneau libre ce jour-là. Essayez une autre date.';
+      } catch (e) {
+        if (numero !== requeteCreneaux) return;
+        info.textContent = e.message;
+      }
+    }
+
+    function ouvrirModal(medecinId) {
+      medecinSelectionne = medecinsCharges.find((m) => m.id === medecinId);
+      if (!medecinSelectionne) return;
+      creneauSelectionne = null;
+      afficherErreur('');
+
+      document.getElementById('modal-titre').textContent = medecinSelectionne.nom;
+      document.getElementById('modal-sous-titre').textContent = `${medecinSelectionne.specialite} · ${medecinSelectionne.hopital}`;
+
+      const today = aujourdhui();
+      const dateInput = document.getElementById('m-date');
+      dateInput.min = today;
+      dateInput.value = dateParDefaut && dateParDefaut >= today ? dateParDefaut : today;
+
+      // Pré-remplissage si l'utilisateur est connecté
+      const user = getUser();
+      if (user) {
+        const nomComplet = [user.prenom, user.nom].filter(Boolean).join(' ');
+        if (nomComplet && !document.getElementById('m-nom').value) document.getElementById('m-nom').value = nomComplet;
+        if (user.telephone && !document.getElementById('m-tel').value) document.getElementById('m-tel').value = user.telephone;
+      }
+
+      document.getElementById('modal-rdv').classList.add('open');
+      chargerCreneaux();
+    }
+
+    function fermerModal() {
+      document.getElementById('modal-rdv').classList.remove('open');
+      medecinSelectionne = null;
+      creneauSelectionne = null;
+    }
+
+    function selectSlot(el, heure) {
+      if (el.classList.contains('unavailable')) return;
+      document.querySelectorAll('.slot').forEach((s) => s.classList.remove('selected'));
+      el.classList.add('selected');
+      creneauSelectionne = heure;
+      afficherErreur('');
+    }
+
+    async function confirmerRDV() {
+      const nom = document.getElementById('m-nom').value.trim();
+      const tel = document.getElementById('m-tel').value.trim();
+      const date = document.getElementById('m-date').value;
+      const motif = document.getElementById('m-motif').value.trim();
+
+      if (!nom) return afficherErreur('Veuillez entrer votre nom.');
+      if (!tel) return afficherErreur('Veuillez entrer votre téléphone.');
+      if (!creneauSelectionne) return afficherErreur('Veuillez sélectionner un créneau horaire.');
+
+      const bouton = document.getElementById('btn-confirmer');
+      bouton.disabled = true;
+      bouton.textContent = 'Réservation en cours…';
+      afficherErreur('');
+
+      try {
+        const rdv = await api('POST', '/rdv', { medecinId: medecinSelectionne.id, date, heure: creneauSelectionne, patient: nom, tel, motif });
+        if (!getUser()) ajouterRefInvite(rdv.reference);
+        fermerModal();
+        document.getElementById('m-motif').value = '';
+        afficherSucces(rdv);
+      } catch (e) {
+        afficherErreur(e.message);
+        if (e.statut === 409) chargerCreneaux(); // créneau pris entre-temps : on rafraîchit la liste
+      } finally {
+        bouton.disabled = false;
+        bouton.textContent = 'Confirmer le rendez-vous';
+      }
+    }
+
+    function afficherSucces(rdv) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
+      const dateTxt = dateLocale(rdv.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      overlay.innerHTML = `
+        <div style="background:white;border-radius:24px;padding:3rem;text-align:center;max-width:420px;width:90%;box-shadow:0 20px 80px rgba(0,0,0,0.3)">
+          <div style="font-size:4rem;margin-bottom:1rem">✅</div>
+          <h2 style="font-family:'Playfair Display',serif;color:#0d1f1a;margin-bottom:0.5rem">Rendez-vous confirmé !</h2>
+          <p style="color:#5a7a72;margin-bottom:0.5rem">Avec <strong>${esc(rdv.medecin)}</strong></p>
+          <p style="color:#5a7a72;margin-bottom:1rem">Le ${esc(dateTxt)} à ${esc(rdv.heure)}</p>
+          <p style="font-size:0.85rem;color:#5a7a72;margin-bottom:0.3rem">Votre référence</p>
+          <p class="ref-code">${esc(rdv.reference)}</p>
+          <p style="font-size:0.8rem;color:#5a7a72;margin:0.8rem 0 1.5rem">Notez-la : elle permet de retrouver ou d'annuler ce rendez-vous.</p>
+          <button id="fermer-succes" style="background:#0a6e5c;color:white;border:none;padding:0.8rem 2rem;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer">Parfait !</button>
+          <br/><a href="rendez-vous.html" style="display:inline-block;margin-top:1rem;color:#0a6e5c;font-size:0.9rem">Voir mes rendez-vous →</a>
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#fermer-succes').addEventListener('click', () => overlay.remove());
+      filtrerHopitaux();
+    }
+
+    document.getElementById('modal-rdv').addEventListener('click', function (e) { if (e.target === this) fermerModal(); });
+    document.getElementById('m-date').addEventListener('change', chargerCreneaux);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const params = new URLSearchParams(window.location.search);
+      dateParDefaut = params.get('date');
+
+      // Listes de filtres alimentées par l'API, puis sélection issue de l'URL
+      await Promise.all([
+        api('GET', '/specialites').then((v) => remplirSelect('f-spec', v)).catch(() => {}),
+        api('GET', '/villes').then((v) => remplirSelect('f-ville', v)).catch(() => {}),
+      ]);
+      if (params.get('spec')) document.getElementById('f-spec').value = params.get('spec');
+      if (params.get('ville')) document.getElementById('f-ville').value = params.get('ville');
+
+      const q = params.get('q');
+      if (q) {
+        const info = document.getElementById('filtre-q');
+        info.innerHTML = `Recherche : « ${esc(q)} » · <a href="hopitaux.html">tout afficher</a>`;
+        info.style.display = 'block';
+      }
+      filtrerHopitaux();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SamaRDV — Hôpitaux en ligne</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <span class="logo-icon">✚</span>
+      <span class="logo-text">SamaRDV</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Accueil</a></li>
+      <li><a href="pages/hopitaux.html">Hôpitaux</a></li>
+      <li><a href="pages/rendez-vous.html">Mes RDV</a></li>
+      <li><a href="pages/contact.html">Contact</a></li>
+    </ul>
+    <a href="pages/connexion.html" class="btn-nav">Se connecter</a>
+    <button class="burger" onclick="toggleMenu()">☰</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <p class="hero-badge">🏥 Plateforme nationale de santé</p>
+      <h1 class="hero-title">Prenez rendez-vous<br/><em>en toute simplicité</em></h1>
+      <p class="hero-sub">Accédez aux meilleurs hôpitaux, choisissez votre spécialiste et réservez en quelques clics. Disponible 24h/24.</p>
+
+      <form class="search-bar" onsubmit="rechercherRDV(event)">
+        <div class="search-field">
+          <label>Spécialité</label>
+          <select id="specialite">
+            <option value="">Choisir une spécialité</option>
+            <option>Cardiologie</option>
+            <option>Pédiatrie</option>
+            <option>Gynécologie</option>
+            <option>Neurologie</option>
+            <option>Ophtalmologie</option>
+            <option>Orthopédie</option>
+            <option>Dermatologie</option>
+            <option>Médecine générale</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <label>Hôpital / Ville</label>
+          <input type="text" placeholder="ex: Dakar, Thiès..." id="ville"/>
+        </div>
+        <div class="search-field">
+          <label>Date souhaitée</label>
+          <input type="date" id="date-rdv"/>
+        </div>
+        <button type="submit" class="btn-search">Rechercher</button>
+      </form>
+    </div>
+    <div class="hero-image">
+      <div class="floating-card card1">
+        <span class="card-icon">👨‍⚕️</span>
+        <div>
+          <strong>Dr. Amadou Diallo</strong>
+          <small>Cardiologue · CHU Dakar</small>
+        </div>
+      </div>
+      <div class="floating-card card2">
+        <span class="card-icon">📅</span>
+        <div>
+          <strong>RDV confirmé</strong>
+          <small>Lundi 12 Mai · 10h30</small>
+        </div>
+      </div>
+      <div class="hero-circle">
+        <div class="circle-inner">
+          <span style="font-size:5rem">🏥</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="stat-item">
+      <h2 class="stat-num" data-stat="hopitaux" data-target="0">0</h2>
+      <p>Hôpitaux partenaires</p>
+    </div>
+    <div class="stat-item">
+      <h2 class="stat-num" data-stat="medecins" data-target="0">0</h2>
+      <p>Médecins disponibles</p>
+    </div>
+    <div class="stat-item">
+      <h2 class="stat-num" data-stat="rendezVous" data-target="0">0</h2>
+      <p>Rendez-vous confirmés</p>
+    </div>
+    <div class="stat-item">
+      <h2 class="stat-num" data-stat="specialites" data-target="0">0</h2>
+      <p>Spécialités</p>
+    </div>
+  </section>
+
+  <!-- ÉTAPES -->
+  <section class="steps-section">
+    <p class="section-badge">Comment ça marche ?</p>
+    <h2 class="section-title">3 étapes pour votre rendez-vous</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">🔍</div>
+        <h3>Recherchez</h3>
+        <p>Trouvez un médecin ou un hôpital selon votre spécialité, votre localisation et vos disponibilités.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">📆</div>
+        <h3>Choisissez</h3>
+        <p>Sélectionnez un créneau disponible parmi les horaires proposés par le praticien.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">✅</div>
+        <h3>Confirmez</h3>
+        <p>Recevez une confirmation immédiate et une référence pour retrouver ou annuler votre rendez-vous.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SPÉCIALITÉS -->
+  <section class="specialites-section">
+    <p class="section-badge">Nos services</p>
+    <h2 class="section-title">Spécialités disponibles</h2>
+    <div class="specialites-grid">
+      <a href="pages/hopitaux.html?spec=Cardiologie" class="spec-card">
+        <span class="spec-emoji">❤️</span>
+        <span>Cardiologie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Pédiatrie" class="spec-card">
+        <span class="spec-emoji">👶</span>
+        <span>Pédiatrie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Gynécologie" class="spec-card">
+        <span class="spec-emoji">🌸</span>
+        <span>Gynécologie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Neurologie" class="spec-card">
+        <span class="spec-emoji">🧠</span>
+        <span>Neurologie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Ophtalmologie" class="spec-card">
+        <span class="spec-emoji">👁️</span>
+        <span>Ophtalmologie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Orthopédie" class="spec-card">
+        <span class="spec-emoji">🦴</span>
+        <span>Orthopédie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Dermatologie" class="spec-card">
+        <span class="spec-emoji">🩺</span>
+        <span>Dermatologie</span>
+      </a>
+      <a href="pages/hopitaux.html?spec=Médecine générale" class="spec-card">
+        <span class="spec-emoji">🏥</span>
+        <span>Médecine générale</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- HÔPITAUX EN VEDETTE -->
+  <section class="hopitaux-section">
+    <p class="section-badge">Partenaires</p>
+    <h2 class="section-title">Hôpitaux partenaires</h2>
+    <div class="hopitaux-grid" id="hopitaux-featured"></div>
+    <div class="center-btn">
+      <a href="pages/hopitaux.html" class="btn-outline">Voir tous les hôpitaux →</a>
+    </div>
+  </section>
+
+  <!-- TÉMOIGNAGES -->
+  <section class="temoignages-section">
+    <p class="section-badge">Avis patients</p>
+    <h2 class="section-title">Ce que disent nos patients</h2>
+    <div class="temoignages-grid">
+      <div class="temoignage-card">
+        <div class="stars">★★★★★</div>
+        <p>"Prise de rendez-vous ultra simple. J'ai trouvé un cardiologue disponible en moins de 5 minutes !"</p>
+        <div class="temoignage-author">
+          <div class="author-avatar">FN</div>
+          <div>
+            <strong>Fatou Ndiaye</strong>
+            <small>Dakar</small>
+          </div>
+        </div>
+      </div>
+      <div class="temoignage-card featured">
+        <div class="stars">★★★★★</div>
+        <p>"Excellente plateforme ! La confirmation par SMS est très pratique. Je recommande vivement à toute ma famille."</p>
+        <div class="temoignage-author">
+          <div class="author-avatar">MD</div>
+          <div>
+            <strong>Moussa Diop</strong>
+            <small>Thiès</small>
+          </div>
+        </div>
+      </div>
+      <div class="temoignage-card">
+        <div class="stars">★★★★☆</div>
+        <p>"Très bon service. L'interface est claire et intuitive. Mes enfants peuvent même l'utiliser seuls."</p>
+        <div class="temoignage-author">
+          <div class="author-avatar">AK</div>
+          <div>
+            <strong>Aïssatou Kane</strong>
+            <small>Saint-Louis</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="nav-logo">
+          <span class="logo-icon">✚</span>
+          <span class="logo-text">SamaRDV</span>
+        </div>
+        <p>La plateforme de santé qui simplifie la prise de rendez-vous médicaux en ligne.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="pages/hopitaux.html">Hôpitaux</a></li>
+          <li><a href="pages/rendez-vous.html">Mes rendez-vous</a></li>
+          <li><a href="pages/contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="#">Conditions d'utilisation</a></li>
+          <li><a href="#">Politique de confidentialité</a></li>
+          <li><a href="#">Mentions légales</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Contact</h4>
+        <p>📞 +221 33 000 00 00</p>
+        <p>✉️ contact@samaRDV.sn</p>
+        <p>📍 Dakar, Sénégal</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 SamaRDV. Tous droits réservés.</p>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
